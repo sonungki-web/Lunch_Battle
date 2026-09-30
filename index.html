@@ -36,7 +36,7 @@
     .topbar {
       min-height: 82px;
       display: grid;
-      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
       gap: 24px;
       border-bottom: 1px solid rgb(32 35 31 / 8%);
@@ -77,37 +77,19 @@
     }
 
     .date-chip span { color: var(--orange); font-size: 15px; }
-    main { padding: 68px 0 56px; }
-
-    .school-selectors {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-    }
-
-    .school-picker {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--muted);
-      font-size: 10px;
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
-    .school-picker select {
-      max-width: 178px;
-      padding: 9px 30px 9px 11px;
-      border: 1px solid var(--line);
-      border-radius: 11px;
-      background: var(--card);
-      color: var(--ink);
+    .date-chip input {
+      width: 132px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
       font: inherit;
       font-size: 12px;
       cursor: pointer;
     }
+    .date-chip input:focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
+    main { padding: 68px 0 56px; }
 
-    .school-picker select:focus-visible,
     .school-card:focus-visible {
       outline: 3px solid rgb(255 104 72 / 55%);
       outline-offset: 3px;
@@ -245,8 +227,8 @@
     .battle {
       position: relative;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 26px;
+      grid-template-columns: minmax(0, 1fr) 46px minmax(0, 1fr) 46px minmax(0, 1fr);
+      gap: 12px;
       align-items: stretch;
     }
 
@@ -377,27 +359,24 @@
       white-space: nowrap;
     }
 
-    .school-card[data-side="away"] .vote-count { background: #f1f6df; color: #657c1e; }
+    .school-card[data-school="안산해솔중학교"] .vote-count { background: #f1f6df; color: #657c1e; }
+    .school-card[data-school="초지고등학교"] .vote-count { background: #eaf5f7; color: #41839a; }
 
     .vs-badge {
-      position: absolute;
-      z-index: 2;
-      top: 50%;
-      left: 50%;
       display: grid;
-      width: 72px;
-      height: 72px;
+      width: 46px;
+      height: 46px;
       place-items: center;
-      border: 5px solid var(--paper);
+      border: 4px solid var(--paper);
       border-radius: 50%;
       background: var(--orange);
       color: white;
-      font-size: 20px;
+      font-size: 15px;
       font-style: italic;
       font-weight: 1000;
       letter-spacing: -1px;
       box-shadow: 0 8px 22px rgb(255 104 72 / 35%);
-      transform: translate(-50%, -50%) rotate(-8deg);
+      transform: rotate(-8deg);
     }
 
     .bottom-note {
@@ -414,24 +393,27 @@
     .bottom-note strong { color: #343831; }
     footer { padding: 20px 0 32px; color: #999b94; font-size: 10px; text-align: center; }
 
+    @media (max-width: 960px) {
+      .battle { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+      .vs-badge { width: 42px; height: 42px; margin: 0 auto; }
+    }
+
     @media (max-width: 700px) {
       .page { width: min(100% - 32px, 500px); }
       .topbar { min-height: 68px; grid-template-columns: 1fr auto; gap: 12px; padding: 12px 0; }
       .brand { font-size: 15px; }
       .date-chip { padding: 8px 10px; font-size: 10px; }
-      .school-selectors { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-      .school-picker { display: grid; gap: 5px; font-size: 9px; }
-      .school-picker select { width: 100%; max-width: none; padding: 9px 7px; font-size: 11px; }
+      .date-chip input { width: 118px; font-size: 10px; }
       main { padding: 48px 0 36px; }
       .intro { margin-bottom: 28px; }
       h1 { letter-spacing: -2.5px; }
       .intro p { font-size: 12px; }
-      .battle { grid-template-columns: 1fr; gap: 22px; }
+      .battle { gap: 10px; }
       .school-card { border-radius: 21px; }
       .photo-wrap { height: clamp(190px, 57vw, 260px); }
       .card-content { padding: 20px; }
       .school-heading h2 { font-size: 19px; }
-      .vs-badge { top: 50%; width: 62px; height: 62px; font-size: 17px; }
+      .vs-badge { width: 40px; height: 40px; font-size: 14px; }
       .bottom-note { margin: 23px 8px 0; line-height: 1.6; }
       .stats-section { margin-top: 38px; padding: 22px 18px; border-radius: 21px; }
       .stats-heading { align-items: flex-start; margin-bottom: 22px; }
@@ -456,23 +438,9 @@
   <div class="page">
     <header class="topbar">
       <div class="brand"><span class="brand-mark" aria-hidden="true">🍴</span>급식 배틀</div>
-      <div class="school-selectors" aria-label="대결 학교 선택">
-        <label class="school-picker">우리 학교
-          <select id="home-school" aria-label="우리 학교 선택">
-            <option value="안산해양중학교">안산해양중학교</option>
-            <option value="안산해솔중학교">안산해솔중학교</option>
-            <option value="초지고등학교">초지고등학교</option>
-          </select>
-        </label>
-        <label class="school-picker">상대 학교
-          <select id="away-school" aria-label="상대 학교 선택">
-            <option value="안산해양중학교">안산해양중학교</option>
-            <option value="안산해솔중학교">안산해솔중학교</option>
-            <option value="초지고등학교" selected>초지고등학교</option>
-          </select>
-        </label>
-      </div>
-      <div class="date-chip"><span aria-hidden="true">●</span> 9월 30일 수요일 급식</div>
+      <label class="date-chip" for="meal-date"><span aria-hidden="true">●</span> 급식 날짜
+        <input id="meal-date" type="date" aria-label="급식 날짜 선택">
+      </label>
     </header>
     <p id="selection-feedback" class="selection-feedback" role="status" aria-live="polite"></p>
 
@@ -480,11 +448,11 @@
       <section class="intro" aria-labelledby="page-title">
         <span class="eyebrow">LUNCH BATTLE · TODAY</span>
         <h1 id="page-title">오늘의 급식, <em>어디가 더 맛있을까?</em></h1>
-        <p>우리 학교와 옆 학교의 오늘 점심을 비교해 보세요.</p>
+        <p>세 학교의 오늘 점심을 한눈에 비교해 보세요.</p>
       </section>
 
-      <section class="battle" aria-label="두 학교의 오늘 급식 비교">
-        <article class="school-card" data-side="home" role="button" tabindex="0" aria-pressed="false">
+      <section class="battle" aria-label="세 학교의 오늘 급식 비교">
+        <article class="school-card" data-school="안산해양중학교" role="button" tabindex="0" aria-pressed="false">
           <div class="photo-wrap">
             <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&amp;fit=crop&amp;w=1000&amp;q=85" alt="신선한 채소와 재료가 담긴 급식 샐러드" fetchpriority="high">
             <div class="photo-label"><span class="live-dot"></span> TODAY'S LUNCH</div>
@@ -494,9 +462,7 @@
             <div class="school-heading">
               <div>
                 <h2 class="school-name">안산해양중학교</h2>
-                <p>우리 학교 · 1학년 3반</p>
               </div>
-              <span class="rank">HOME</span>
             </div>
             <ul class="menu-list school-menu" aria-label="안산해양중학교 식단">
               <li>찰현미밥 &amp; 한우 미역국</li>
@@ -514,7 +480,35 @@
 
         <div class="vs-badge" aria-label="대결">VS</div>
 
-        <article class="school-card" data-side="away" role="button" tabindex="0" aria-pressed="false">
+        <article class="school-card" data-school="안산해솔중학교" role="button" tabindex="0" aria-pressed="false">
+          <div class="photo-wrap">
+            <img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&amp;fit=crop&amp;w=1000&amp;q=85" alt="신선한 채소와 곡물이 담긴 한 끼 식사" loading="lazy">
+            <div class="photo-label"><span class="live-dot"></span> TODAY'S LUNCH</div>
+            <div class="win-stamp" aria-hidden="true">WIN! 🎉</div>
+          </div>
+          <div class="card-content">
+            <div class="school-heading">
+              <div>
+                <h2 class="school-name">안산해솔중학교</h2>
+              </div>
+            </div>
+            <ul class="menu-list school-menu" aria-label="안산해솔중학교 식단">
+              <li>보리밥 &amp; 얼갈이된장국</li>
+              <li>간장 돼지불고기</li>
+              <li>애호박전 &amp; 양념장</li>
+              <li>배추김치 · 사과</li>
+            </ul>
+            <div class="divider"></div>
+            <div class="card-bottom">
+              <span class="today-note"><strong>오늘의 포인트</strong> · 간장 돼지불고기</span>
+              <span class="vote-count"><span aria-hidden="true">♥</span> <span class="vote-total">0</span></span>
+            </div>
+          </div>
+        </article>
+
+        <div class="vs-badge" aria-label="대결">VS</div>
+
+        <article class="school-card" data-school="초지고등학교" role="button" tabindex="0" aria-pressed="false">
           <div class="photo-wrap">
             <img src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&amp;fit=crop&amp;w=1000&amp;q=85" alt="다양한 반찬과 채소가 담긴 한 끼 식사" loading="lazy">
             <div class="photo-label"><span class="live-dot"></span> TODAY'S LUNCH</div>
@@ -524,9 +518,7 @@
             <div class="school-heading">
               <div>
                 <h2 class="school-name">초지고등학교</h2>
-                <p>라이벌 학교 · 2학년 5반</p>
               </div>
-              <span class="rank">AWAY</span>
             </div>
             <ul class="menu-list school-menu" aria-label="초지고등학교 식단">
               <li>김가루 주먹밥 &amp; 얼큰 어묵국</li>
@@ -563,23 +555,30 @@
   </div>
   <script>
     const schoolNames = ["안산해양중학교", "안산해솔중학교", "초지고등학교"];
-    const storageKey = "lunch-battle.family-votes.v1";
-    const schoolSelects = {
-      home: document.querySelector("#home-school"),
-      away: document.querySelector("#away-school")
+    const schoolCodes = {
+      "안산해양중학교": "7611124",
+      "안산해솔중학교": "7611223",
+      "초지고등학교": "7530478"
     };
+    const educationOfficeCode = "J10";
+    const exampleMenus = {
+      "안산해양중학교": ["찰현미밥 & 한우 미역국", "바삭한 순살 치킨 & 양념소스", "새콤달콤 과일 샐러드", "깍두기 · 초코 우유"],
+      "안산해솔중학교": ["보리밥 & 얼갈이된장국", "간장 돼지불고기", "애호박전 & 양념장", "배추김치 · 사과"],
+      "초지고등학교": ["김가루 주먹밥 & 얼큰 어묵국", "수제 돈가스 & 데미글라스 소스", "고소한 콘 샐러드", "배추김치 · 요구르트"]
+    };
+    const storageKey = "lunch-battle.family-votes.v1";
     const cards = [...document.querySelectorAll(".school-card")];
     const selectionFeedback = document.querySelector("#selection-feedback");
     const storageError = document.querySelector("#storage-error");
     const rankingList = document.querySelector("#ranking-list");
     const totalVotes = document.querySelector("#total-votes");
+    const mealDate = document.querySelector("#meal-date");
     const rankingRows = new Map();
-    const selectedSchools = {
-      home: schoolSelects.home.value,
-      away: schoolSelects.away.value
-    };
+    const mealsBySchool = new Map();
     const localDate = new Date();
     const today = `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, "0")}-${String(localDate.getDate()).padStart(2, "0")}`;
+    mealDate.value = today;
+    let mealRequestId = 0;
     let voteState;
     let storageReady = false;
 
@@ -678,16 +677,14 @@
       }
 
       cards.forEach((card) => {
-        const schoolName = selectedSchools[card.dataset.side];
+        const schoolName = card.dataset.school;
         card.querySelector(".vote-total").textContent = voteState.scores[schoolName].toLocaleString("ko-KR");
       });
     }
 
     function setVoteLocked(schoolName) {
-      schoolSelects.home.disabled = true;
-      schoolSelects.away.disabled = true;
       cards.forEach((card) => {
-        const isWinner = selectedSchools[card.dataset.side] === schoolName;
+        const isWinner = card.dataset.school === schoolName;
         card.classList.add(isWinner ? "is-winner" : "is-locked");
         card.setAttribute("aria-disabled", "true");
         card.setAttribute("aria-pressed", String(isWinner));
@@ -697,37 +694,115 @@
 
     function updateSchoolNames() {
       cards.forEach((card) => {
-        const side = card.dataset.side;
-        const schoolName = selectedSchools[side];
+        const schoolName = card.dataset.school;
         card.querySelector(".school-name").textContent = schoolName;
         card.querySelector(".school-menu").setAttribute("aria-label", `${schoolName} 식단`);
         card.setAttribute("aria-label", `${schoolName} 급식에 투표`);
       });
       renderStatistics();
+      renderMenus();
     }
 
-    function updateSchoolOptions() {
-      Object.entries(schoolSelects).forEach(([side, select]) => {
-        const otherSide = side === "home" ? "away" : "home";
-        [...select.options].forEach((option) => {
-          option.disabled = option.value === selectedSchools[otherSide];
+    function renderMenus() {
+      cards.forEach((card) => {
+        const schoolName = card.dataset.school;
+        const meal = mealsBySchool.get(schoolName);
+        if (!meal) return;
+
+        const list = card.querySelector(".school-menu");
+        list.replaceChildren();
+        (meal.items.length ? meal.items : [meal.message]).forEach((item) => {
+          const entry = document.createElement("li");
+          entry.textContent = item;
+          list.append(entry);
         });
+        card.querySelector(".today-note").textContent = meal.note;
       });
     }
 
-    Object.entries(schoolSelects).forEach(([side, select]) => {
-      select.addEventListener("change", () => {
-        if (select.value === selectedSchools[side === "home" ? "away" : "home"]) {
-          select.value = selectedSchools[side];
-          selectionFeedback.textContent = "서로 다른 학교를 선택해 주세요.";
-          return;
-        }
-        selectedSchools[side] = select.value;
-        selectionFeedback.textContent = "";
-        updateSchoolNames();
-        updateSchoolOptions();
+    function formatMealDate(value) {
+      const [year, month, day] = value.split("-").map(Number);
+      return new Date(year, month - 1, day).toLocaleDateString("ko-KR", {
+        year: "numeric", month: "long", day: "numeric", weekday: "long"
       });
-    });
+    }
+
+    function noMeal(message = "선택한 날짜에는 급식이 없어요.") {
+      return { items: [], message, note: "오늘은 급식이 없는 날이에요!" };
+    }
+
+    async function fetchSchoolMeal(schoolName, apiDate) {
+      const params = new URLSearchParams({
+        Type: "json",
+        pIndex: "1",
+        pSize: "10",
+        ATPT_OFCDC_SC_CODE: educationOfficeCode,
+        SD_SCHUL_CODE: schoolCodes[schoolName],
+        MMEAL_SC_CODE: "2",
+        MLSV_YMD: apiDate
+      });
+      const response = await fetch(`https://open.neis.go.kr/hub/mealServiceDietInfo?${params}`);
+      if (!response.ok) throw new Error(`NEIS 응답 오류 (${response.status})`);
+
+      const data = await response.json();
+      const service = data.mealServiceDietInfo;
+      if (!service) {
+        const result = data.RESULT ?? Object.values(data).flatMap((part) => Array.isArray(part) ? part : [])
+          .flatMap((part) => part.head ?? [])
+          .find((item) => item.RESULT)?.RESULT;
+        if (result?.CODE === "INFO-200") return noMeal();
+        throw new Error(result?.MESSAGE ?? "NEIS 급식 데이터를 읽을 수 없습니다.");
+      }
+
+      const rows = service.find((part) => Array.isArray(part.row))?.row ?? [];
+      const lunch = rows.find((row) => row.MLSV_YMD === apiDate && row.MMEAL_SC_CODE === "2");
+      if (!lunch?.DDISH_NM) return noMeal();
+
+      const text = new DOMParser().parseFromString(
+        lunch.DDISH_NM.replace(/<br\s*\/?\s*>/gi, "\n"), "text/html"
+      ).body.textContent;
+      const items = text.split("\n").map((item) => item.trim()).filter(Boolean);
+      return { items, note: lunch.CAL_INFO ? `중식 · ${lunch.CAL_INFO}` : "NEIS 등록 식단" };
+    }
+
+    async function loadMeals(value) {
+      if (!value) return;
+      const requestId = ++mealRequestId;
+      const [year, month, day] = value.split("-").map(Number);
+      const selectedDate = new Date(year, month - 1, day);
+      const apiDate = value.replaceAll("-", "");
+      const dateLabel = formatMealDate(value);
+      document.querySelector("#page-title").innerHTML = `${dateLabel} 급식, <em>어디가 더 맛있을까?</em>`;
+
+      if (selectedDate.getDay() === 0 || selectedDate.getDay() === 6) {
+        schoolNames.forEach((name) => mealsBySchool.set(name, noMeal("주말에는 급식이 없어요!")));
+        renderMenus();
+        return;
+      }
+
+      schoolNames.forEach((name) => mealsBySchool.set(name, {
+        items: ["NEIS에서 식단을 불러오는 중입니다."], note: "급식 정보를 조회하고 있어요."
+      }));
+      renderMenus();
+
+      await Promise.all(schoolNames.map(async (name) => {
+        try {
+          const meal = await fetchSchoolMeal(name, apiDate);
+          if (requestId === mealRequestId) mealsBySchool.set(name, meal);
+        } catch (error) {
+          if (requestId === mealRequestId) {
+            mealsBySchool.set(name, {
+              items: exampleMenus[name],
+              note: "연결 오류 · 예시 메뉴를 표시합니다"
+            });
+          }
+        }
+      }));
+
+      if (requestId === mealRequestId) renderMenus();
+    }
+
+    mealDate.addEventListener("change", () => loadMeals(mealDate.value));
 
     function castVote(winner) {
       if (!storageReady || voteState.lastVoteDate === today) return;
@@ -738,7 +813,7 @@
         history: [...voteState.history, { school: winnerName, date: today, timestamp: new Date().toISOString() }].slice(-1000),
         lastVoteDate: today,
         lastVoteSchool: winnerName,
-        lastVoteMatchup: { ...selectedSchools }
+        lastVoteMatchup: null
       };
       if (!persistVoteState(nextState)) return;
       setVoteLocked(winnerName);
@@ -760,12 +835,6 @@
       voteState = readVoteState(localStorage.getItem(storageKey));
       storageReady = true;
       if (voteState.lastVoteDate === today && voteState.lastVoteSchool) {
-        if (voteState.lastVoteMatchup) {
-          selectedSchools.home = voteState.lastVoteMatchup.home;
-          selectedSchools.away = voteState.lastVoteMatchup.away;
-          schoolSelects.home.value = selectedSchools.home;
-          schoolSelects.away.value = selectedSchools.away;
-        }
         setVoteLocked(voteState.lastVoteSchool);
       }
     } catch (error) {
@@ -782,14 +851,6 @@
       try {
         voteState = readVoteState(event.newValue);
         if (voteState.lastVoteDate === today && voteState.lastVoteSchool) {
-          if (voteState.lastVoteMatchup) {
-            selectedSchools.home = voteState.lastVoteMatchup.home;
-            selectedSchools.away = voteState.lastVoteMatchup.away;
-            schoolSelects.home.value = selectedSchools.home;
-            schoolSelects.away.value = selectedSchools.away;
-            updateSchoolNames();
-            updateSchoolOptions();
-          }
           setVoteLocked(voteState.lastVoteSchool);
         }
         renderStatistics();
@@ -799,7 +860,7 @@
     });
 
     updateSchoolNames();
-    updateSchoolOptions();
+    loadMeals(mealDate.value);
   </script>
 </body>
 </html>

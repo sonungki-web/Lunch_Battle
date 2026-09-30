@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ef">
+  <title>오늘의 급식 배틀</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #20231f;
+      --muted: #777b73;
+      --paper: #f7f5ef;
+      --card: #fffefa;
+      --orange: #ff6848;
+      --green: #d5f36a;
+      --line: #e9e7df;
+      --shadow: 0 18px 55px rgb(45 43 35 / 8%);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background:
+        radial-gradient(ellipse at 50% 5%, rgb(213 243 106 / 22%), transparent 31rem),
+        var(--paper);
+      color: var(--ink);
+      font-family: "Pretendard", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page { width: min(1160px, calc(100% - 48px)); margin: 0 auto; }
+
+    .topbar {
+      min-height: 82px;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 24px;
+      border-bottom: 1px solid rgb(32 35 31 / 8%);
+    }
+
+    .brand {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border-radius: 11px;
+      background: var(--orange);
+      color: white;
+      font-size: 19px;
+      transform: rotate(-7deg);
+    }
+
+    .date-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgb(255 254 250 / 75%);
+      color: #51554d;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .date-chip span { color: var(--orange); font-size: 15px; }
+    main { padding: 68px 0 56px; }
+
+    .school-selectors {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .school-picker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .school-picker select {
+      max-width: 178px;
+      padding: 9px 30px 9px 11px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--card);
+      color: var(--ink);
+      font: inherit;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .school-picker select:focus-visible,
+    .school-card:focus-visible {
+      outline: 3px solid rgb(255 104 72 / 55%);
+      outline-offset: 3px;
+    }
+
+    .selection-feedback {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+
+    .stats-section {
+      margin-top: 54px;
+      padding: 30px;
+      border: 1px solid rgb(32 35 31 / 6%);
+      border-radius: 26px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+
+    .stats-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 26px;
+    }
+
+    .stats-kicker {
+      display: inline-block;
+      margin-bottom: 7px;
+      color: #7a805e;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 1.8px;
+    }
+
+    .stats-heading h2 { margin: 0; font-size: 25px; letter-spacing: -1.3px; }
+    .stats-heading p { margin: 7px 0 0; color: var(--muted); font-size: 12px; }
+
+    .stats-total {
+      flex: none;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: #f3f6e8;
+      color: #657c1e;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .ranking-list { display: grid; gap: 15px; margin: 0; padding: 0; list-style: none; }
+
+    .ranking-row {
+      display: grid;
+      grid-template-columns: 34px minmax(115px, 190px) minmax(0, 1fr) 48px;
+      gap: 12px;
+      align-items: center;
+      min-width: 0;
+      animation: rank-enter .35s ease both;
+    }
+
+    .ranking-place {
+      display: grid;
+      width: 30px;
+      height: 30px;
+      place-items: center;
+      border-radius: 10px;
+      background: #f3f2ec;
+      color: #60645b;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .ranking-row:first-child .ranking-place { background: #fff1cc; color: #a66c00; }
+    .ranking-school { overflow: hidden; font-size: 13px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+    .bar-track { height: 14px; overflow: hidden; border-radius: 999px; background: #f1f0ea; }
+
+    .bar-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #ff9b70, var(--orange));
+      transition: width .75s cubic-bezier(.22, 1, .36, 1);
+    }
+
+    .ranking-row:nth-child(2) .bar-fill { background: linear-gradient(90deg, #d8ed87, #9bb94a); }
+    .ranking-row:nth-child(3) .bar-fill { background: linear-gradient(90deg, #a9dff0, #5baac4); }
+    .ranking-votes { text-align: right; font-size: 13px; font-weight: 900; font-variant-numeric: tabular-nums; }
+
+    .stats-footnote {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin: 22px 0 0;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #fff8e9;
+      color: #77705f;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .stats-error { color: #bd3d2a; font-weight: 800; }
+
+    @keyframes rank-enter {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .intro { margin-bottom: 38px; text-align: center; }
+
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 14px;
+      color: #7a805e;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 2.2px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 5vw, 58px);
+      font-weight: 950;
+      letter-spacing: -3.6px;
+      line-height: 1.12;
+    }
+
+    h1 em { color: var(--orange); font-style: normal; }
+    .intro p { margin: 14px 0 0; color: var(--muted); font-size: 14px; }
+
+    .battle {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 26px;
+      align-items: stretch;
+    }
+
+    .school-card {
+      overflow: hidden;
+      border: 1px solid rgb(32 35 31 / 6%);
+      border-radius: 25px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: box-shadow .2s ease, transform .2s ease;
+    }
+
+    .school-card:not(.is-voted):hover { transform: translateY(-3px); box-shadow: 0 22px 60px rgb(45 43 35 / 12%); }
+    .school-card.is-voted { cursor: default; }
+    .school-card.is-locked { cursor: not-allowed; }
+
+    .photo-wrap { position: relative; height: 285px; overflow: hidden; background: #e7e3d8; }
+
+    .photo-wrap::after {
+      position: absolute;
+      inset: 45% 0 0;
+      background: linear-gradient(transparent, rgb(0 0 0 / 45%));
+      content: "";
+    }
+
+    .photo-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform .5s ease;
+    }
+
+    .school-card:not(.is-locked):hover .photo-wrap img { transform: scale(1.04); }
+
+    .win-stamp {
+      position: absolute;
+      z-index: 2;
+      top: 50%;
+      left: 50%;
+      padding: 12px 19px;
+      border: 4px solid white;
+      border-radius: 12px;
+      background: var(--orange);
+      color: white;
+      font-size: clamp(23px, 4vw, 34px);
+      font-weight: 1000;
+      letter-spacing: 1px;
+      opacity: 0;
+      pointer-events: none;
+      text-shadow: 0 2px 0 rgb(0 0 0 / 12%);
+      transform: translate(-50%, -50%) rotate(-12deg) scale(2.5);
+    }
+
+    .school-card.is-winner .win-stamp { animation: stamp-win .65s cubic-bezier(.2, 1.6, .45, 1) forwards; }
+
+    @keyframes stamp-win {
+      0% { opacity: 0; transform: translate(-50%, -50%) rotate(-12deg) scale(2.5); }
+      75% { opacity: 1; transform: translate(-50%, -50%) rotate(-12deg) scale(.92); }
+      100% { opacity: 1; transform: translate(-50%, -50%) rotate(-12deg) scale(1); }
+    }
+
+    .photo-label {
+      position: absolute;
+      z-index: 1;
+      bottom: 18px;
+      left: 22px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      color: white;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+    .card-content { padding: 23px 25px 24px; }
+
+    .school-heading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .school-heading h2 { margin: 0; font-size: 21px; letter-spacing: -1px; }
+    .school-heading p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+
+    .rank {
+      flex: none;
+      padding: 7px 10px;
+      border-radius: 10px;
+      background: #f3f2ec;
+      color: #666a61;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .menu-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+    .menu-list li { display: flex; gap: 10px; align-items: center; color: #4c5049; font-size: 13px; }
+    .menu-list li::before {
+      width: 6px;
+      height: 6px;
+      flex: none;
+      border-radius: 50%;
+      background: #c9d989;
+      content: "";
+    }
+
+    .menu-list li:first-child { color: var(--ink); font-weight: 800; }
+    .divider { height: 1px; margin: 19px 0 15px; background: var(--line); }
+
+    .card-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .today-note { color: #777b73; font-size: 11px; }
+    .today-note strong { color: #373b34; font-size: 12px; }
+
+    .vote-count {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: #fff0eb;
+      color: #df573a;
+      font-size: 11px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .school-card[data-side="away"] .vote-count { background: #f1f6df; color: #657c1e; }
+
+    .vs-badge {
+      position: absolute;
+      z-index: 2;
+      top: 50%;
+      left: 50%;
+      display: grid;
+      width: 72px;
+      height: 72px;
+      place-items: center;
+      border: 5px solid var(--paper);
+      border-radius: 50%;
+      background: var(--orange);
+      color: white;
+      font-size: 20px;
+      font-style: italic;
+      font-weight: 1000;
+      letter-spacing: -1px;
+      box-shadow: 0 8px 22px rgb(255 104 72 / 35%);
+      transform: translate(-50%, -50%) rotate(-8deg);
+    }
+
+    .bottom-note {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-top: 28px;
+      color: #777b73;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .bottom-note strong { color: #343831; }
+    footer { padding: 20px 0 32px; color: #999b94; font-size: 10px; text-align: center; }
+
+    @media (max-width: 700px) {
+      .page { width: min(100% - 32px, 500px); }
+      .topbar { min-height: 68px; grid-template-columns: 1fr auto; gap: 12px; padding: 12px 0; }
+      .brand { font-size: 15px; }
+      .date-chip { padding: 8px 10px; font-size: 10px; }
+      .school-selectors { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .school-picker { display: grid; gap: 5px; font-size: 9px; }
+      .school-picker select { width: 100%; max-width: none; padding: 9px 7px; font-size: 11px; }
+      main { padding: 48px 0 36px; }
+      .intro { margin-bottom: 28px; }
+      h1 { letter-spacing: -2.5px; }
+      .intro p { font-size: 12px; }
+      .battle { grid-template-columns: 1fr; gap: 22px; }
+      .school-card { border-radius: 21px; }
+      .photo-wrap { height: clamp(190px, 57vw, 260px); }
+      .card-content { padding: 20px; }
+      .school-heading h2 { font-size: 19px; }
+      .vs-badge { top: 50%; width: 62px; height: 62px; font-size: 17px; }
+      .bottom-note { margin: 23px 8px 0; line-height: 1.6; }
+      .stats-section { margin-top: 38px; padding: 22px 18px; border-radius: 21px; }
+      .stats-heading { align-items: flex-start; margin-bottom: 22px; }
+      .stats-heading h2 { font-size: 21px; }
+      .stats-heading p { max-width: 230px; line-height: 1.5; }
+      .stats-total { padding: 8px 9px; font-size: 10px; }
+      .ranking-list { gap: 17px; }
+      .ranking-row { grid-template-columns: 28px minmax(90px, 1fr) 42px; gap: 8px; }
+      .ranking-place { width: 26px; height: 26px; border-radius: 8px; font-size: 11px; }
+      .ranking-school { font-size: 11px; }
+      .bar-track { grid-column: 2 / 4; grid-row: 2; height: 12px; }
+      .ranking-votes { grid-column: 3; grid-row: 1; font-size: 12px; }
+      .stats-footnote { margin-top: 18px; font-size: 10px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">🍴</span>급식 배틀</div>
+      <div class="school-selectors" aria-label="대결 학교 선택">
+        <label class="school-picker">우리 학교
+          <select id="home-school" aria-label="우리 학교 선택">
+            <option value="안산해양중학교">안산해양중학교</option>
+            <option value="안산해솔중학교">안산해솔중학교</option>
+            <option value="초지고등학교">초지고등학교</option>
+          </select>
+        </label>
+        <label class="school-picker">상대 학교
+          <select id="away-school" aria-label="상대 학교 선택">
+            <option value="안산해양중학교">안산해양중학교</option>
+            <option value="안산해솔중학교">안산해솔중학교</option>
+            <option value="초지고등학교" selected>초지고등학교</option>
+          </select>
+        </label>
+      </div>
+      <div class="date-chip"><span aria-hidden="true">●</span> 9월 30일 수요일 급식</div>
+    </header>
+    <p id="selection-feedback" class="selection-feedback" role="status" aria-live="polite"></p>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <span class="eyebrow">LUNCH BATTLE · TODAY</span>
+        <h1 id="page-title">오늘의 급식, <em>어디가 더 맛있을까?</em></h1>
+        <p>우리 학교와 옆 학교의 오늘 점심을 비교해 보세요.</p>
+      </section>
+
+      <section class="battle" aria-label="두 학교의 오늘 급식 비교">
+        <article class="school-card" data-side="home" role="button" tabindex="0" aria-pressed="false">
+          <div class="photo-wrap">
+            <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&amp;fit=crop&amp;w=1000&amp;q=85" alt="신선한 채소와 재료가 담긴 급식 샐러드" fetchpriority="high">
+            <div class="photo-label"><span class="live-dot"></span> TODAY'S LUNCH</div>
+            <div class="win-stamp" aria-hidden="true">WIN! 🎉</div>
+          </div>
+          <div class="card-content">
+            <div class="school-heading">
+              <div>
+                <h2 class="school-name">안산해양중학교</h2>
+                <p>우리 학교 · 1학년 3반</p>
+              </div>
+              <span class="rank">HOME</span>
+            </div>
+            <ul class="menu-list school-menu" aria-label="안산해양중학교 식단">
+              <li>찰현미밥 &amp; 한우 미역국</li>
+              <li>바삭한 순살 치킨 &amp; 양념소스</li>
+              <li>새콤달콤 과일 샐러드</li>
+              <li>깍두기 · 초코 우유</li>
+            </ul>
+            <div class="divider"></div>
+            <div class="card-bottom">
+              <span class="today-note"><strong>오늘의 포인트</strong> · 치킨 나오는 날!</span>
+              <span class="vote-count"><span aria-hidden="true">♥</span> <span class="vote-total">0</span></span>
+            </div>
+          </div>
+        </article>
+
+        <div class="vs-badge" aria-label="대결">VS</div>
+
+        <article class="school-card" data-side="away" role="button" tabindex="0" aria-pressed="false">
+          <div class="photo-wrap">
+            <img src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&amp;fit=crop&amp;w=1000&amp;q=85" alt="다양한 반찬과 채소가 담긴 한 끼 식사" loading="lazy">
+            <div class="photo-label"><span class="live-dot"></span> TODAY'S LUNCH</div>
+            <div class="win-stamp" aria-hidden="true">WIN! 🎉</div>
+          </div>
+          <div class="card-content">
+            <div class="school-heading">
+              <div>
+                <h2 class="school-name">초지고등학교</h2>
+                <p>라이벌 학교 · 2학년 5반</p>
+              </div>
+              <span class="rank">AWAY</span>
+            </div>
+            <ul class="menu-list school-menu" aria-label="초지고등학교 식단">
+              <li>김가루 주먹밥 &amp; 얼큰 어묵국</li>
+              <li>수제 돈가스 &amp; 데미글라스 소스</li>
+              <li>고소한 콘 샐러드</li>
+              <li>배추김치 · 요구르트</li>
+            </ul>
+            <div class="divider"></div>
+            <div class="card-bottom">
+              <span class="today-note"><strong>오늘의 포인트</strong> · 수제 돈가스 등장!</span>
+              <span class="vote-count"><span aria-hidden="true">♥</span> <span class="vote-total">0</span></span>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <div class="bottom-note"><span aria-hidden="true">✨</span><span><strong>오늘의 승자는?</strong> 사진과 메뉴를 보고 친구들과 이야기해 봐요!</span></div>
+
+      <section class="stats-section" aria-labelledby="stats-title">
+        <div class="stats-heading">
+          <div>
+            <span class="stats-kicker">FAMILY LEADERBOARD</span>
+            <h2 id="stats-title">우리 가족 급식 순위 🏆</h2>
+            <p>투표할 때마다 누적 득표와 순위가 실시간으로 바뀌어요.</p>
+          </div>
+          <span class="stats-total"><span id="total-votes">0</span>표 참여</span>
+        </div>
+        <ol id="ranking-list" class="ranking-list" aria-label="학교별 누적 득표 순위"></ol>
+        <p class="stats-footnote"><span aria-hidden="true">💡</span><span>투표 기록은 이 기기의 브라우저에 저장돼요. 가족의 여러 기기에서 투표를 합산하려면 공용 서버 연동이 필요합니다.</span></p>
+        <p id="storage-error" class="selection-feedback stats-error" role="alert" aria-live="assertive"></p>
+      </section>
+    </main>
+    <footer>메뉴와 사진은 이해를 돕기 위한 예시입니다. · 이 브라우저에서는 하루 한 번 투표할 수 있어요.</footer>
+  </div>
+  <script>
+    const schoolNames = ["안산해양중학교", "안산해솔중학교", "초지고등학교"];
+    const storageKey = "lunch-battle.family-votes.v1";
+    const schoolSelects = {
+      home: document.querySelector("#home-school"),
+      away: document.querySelector("#away-school")
+    };
+    const cards = [...document.querySelectorAll(".school-card")];
+    const selectionFeedback = document.querySelector("#selection-feedback");
+    const storageError = document.querySelector("#storage-error");
+    const rankingList = document.querySelector("#ranking-list");
+    const totalVotes = document.querySelector("#total-votes");
+    const rankingRows = new Map();
+    const selectedSchools = {
+      home: schoolSelects.home.value,
+      away: schoolSelects.away.value
+    };
+    const localDate = new Date();
+    const today = `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, "0")}-${String(localDate.getDate()).padStart(2, "0")}`;
+    let voteState;
+    let storageReady = false;
+
+    function readVoteState(raw) {
+      if (raw === null) {
+        return {
+          version: 1,
+          scores: Object.fromEntries(schoolNames.map((name) => [name, 0])),
+          history: [],
+          lastVoteDate: null,
+          lastVoteSchool: null,
+          lastVoteMatchup: null
+        };
+      }
+
+      const parsed = JSON.parse(raw);
+      if (
+        parsed?.version !== 1 ||
+        !parsed.scores ||
+        !Array.isArray(parsed.history) ||
+        (parsed.lastVoteDate !== null && typeof parsed.lastVoteDate !== "string") ||
+        (parsed.lastVoteSchool !== null && !schoolNames.includes(parsed.lastVoteSchool)) ||
+        (parsed.lastVoteMatchup != null && (
+          !schoolNames.includes(parsed.lastVoteMatchup.home) ||
+          !schoolNames.includes(parsed.lastVoteMatchup.away) ||
+          parsed.lastVoteMatchup.home === parsed.lastVoteMatchup.away
+        ))
+      ) {
+        throw new Error("저장된 투표 데이터 형식이 올바르지 않습니다.");
+      }
+
+      const scores = Object.fromEntries(schoolNames.map((name) => {
+        const score = parsed.scores[name] ?? 0;
+        if (!Number.isSafeInteger(score) || score < 0) {
+          throw new Error("저장된 득표 수가 올바르지 않습니다.");
+        }
+        return [name, score];
+      }));
+      return { ...parsed, scores, lastVoteMatchup: parsed.lastVoteMatchup ?? null };
+    }
+
+    function persistVoteState(nextState) {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(nextState));
+        voteState = nextState;
+        storageError.textContent = "";
+        return true;
+      } catch (error) {
+        storageError.textContent = `투표를 저장하지 못했습니다: ${error.message}`;
+        return false;
+      }
+    }
+
+    function renderStatistics() {
+      const total = schoolNames.reduce((sum, name) => sum + voteState.scores[name], 0);
+      const maximum = Math.max(1, ...schoolNames.map((name) => voteState.scores[name]));
+      const sortedSchools = [...schoolNames].sort((a, b) => voteState.scores[b] - voteState.scores[a]);
+      const initialBars = [];
+      totalVotes.textContent = total.toLocaleString("ko-KR");
+      sortedSchools.forEach((name, index) => {
+        let row = rankingRows.get(name);
+        if (!row) {
+          row = document.createElement("li");
+          row.className = "ranking-row";
+          const place = document.createElement("span");
+          place.className = "ranking-place";
+          const school = document.createElement("span");
+          school.className = "ranking-school";
+          const track = document.createElement("span");
+          track.className = "bar-track";
+          track.setAttribute("aria-hidden", "true");
+          const fill = document.createElement("span");
+          fill.className = "bar-fill";
+          fill.style.width = "0%";
+          track.append(fill);
+          const votes = document.createElement("span");
+          votes.className = "ranking-votes";
+          row.append(place, school, track, votes);
+          rankingRows.set(name, row);
+          initialBars.push([fill, `${(voteState.scores[name] / maximum) * 100}%`]);
+        }
+
+        row.setAttribute("aria-label", `${index + 1}위 ${name}, ${voteState.scores[name]}표`);
+        row.querySelector(".ranking-place").textContent = `${index + 1}위`;
+        row.querySelector(".ranking-school").textContent = name;
+        row.querySelector(".ranking-votes").textContent = `${voteState.scores[name].toLocaleString("ko-KR")}표`;
+        if (!initialBars.some(([fill]) => fill === row.querySelector(".bar-fill"))) {
+          row.querySelector(".bar-fill").style.width = `${(voteState.scores[name] / maximum) * 100}%`;
+        }
+        rankingList.append(row);
+      });
+      if (initialBars.length) {
+        requestAnimationFrame(() => initialBars.forEach(([fill, width]) => {
+          fill.style.width = width;
+        }));
+      }
+
+      cards.forEach((card) => {
+        const schoolName = selectedSchools[card.dataset.side];
+        card.querySelector(".vote-total").textContent = voteState.scores[schoolName].toLocaleString("ko-KR");
+      });
+    }
+
+    function setVoteLocked(schoolName) {
+      schoolSelects.home.disabled = true;
+      schoolSelects.away.disabled = true;
+      cards.forEach((card) => {
+        const isWinner = selectedSchools[card.dataset.side] === schoolName;
+        card.classList.add(isWinner ? "is-winner" : "is-locked");
+        card.setAttribute("aria-disabled", "true");
+        card.setAttribute("aria-pressed", String(isWinner));
+        card.tabIndex = -1;
+      });
+    }
+
+    function updateSchoolNames() {
+      cards.forEach((card) => {
+        const side = card.dataset.side;
+        const schoolName = selectedSchools[side];
+        card.querySelector(".school-name").textContent = schoolName;
+        card.querySelector(".school-menu").setAttribute("aria-label", `${schoolName} 식단`);
+        card.setAttribute("aria-label", `${schoolName} 급식에 투표`);
+      });
+      renderStatistics();
+    }
+
+    function updateSchoolOptions() {
+      Object.entries(schoolSelects).forEach(([side, select]) => {
+        const otherSide = side === "home" ? "away" : "home";
+        [...select.options].forEach((option) => {
+          option.disabled = option.value === selectedSchools[otherSide];
+        });
+      });
+    }
+
+    Object.entries(schoolSelects).forEach(([side, select]) => {
+      select.addEventListener("change", () => {
+        if (select.value === selectedSchools[side === "home" ? "away" : "home"]) {
+          select.value = selectedSchools[side];
+          selectionFeedback.textContent = "서로 다른 학교를 선택해 주세요.";
+          return;
+        }
+        selectedSchools[side] = select.value;
+        selectionFeedback.textContent = "";
+        updateSchoolNames();
+        updateSchoolOptions();
+      });
+    });
+
+    function castVote(winner) {
+      if (!storageReady || voteState.lastVoteDate === today) return;
+      const winnerName = winner.querySelector(".school-name").textContent;
+      const nextState = {
+        ...voteState,
+        scores: { ...voteState.scores, [winnerName]: voteState.scores[winnerName] + 1 },
+        history: [...voteState.history, { school: winnerName, date: today, timestamp: new Date().toISOString() }].slice(-1000),
+        lastVoteDate: today,
+        lastVoteSchool: winnerName,
+        lastVoteMatchup: { ...selectedSchools }
+      };
+      if (!persistVoteState(nextState)) return;
+      setVoteLocked(winnerName);
+      renderStatistics();
+      selectionFeedback.textContent = `${winnerName}에 투표했습니다.`;
+    }
+
+    cards.forEach((card) => {
+      card.addEventListener("click", () => castVote(card));
+      card.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          castVote(card);
+        }
+      });
+    });
+
+    try {
+      voteState = readVoteState(localStorage.getItem(storageKey));
+      storageReady = true;
+      if (voteState.lastVoteDate === today && voteState.lastVoteSchool) {
+        if (voteState.lastVoteMatchup) {
+          selectedSchools.home = voteState.lastVoteMatchup.home;
+          selectedSchools.away = voteState.lastVoteMatchup.away;
+          schoolSelects.home.value = selectedSchools.home;
+          schoolSelects.away.value = selectedSchools.away;
+        }
+        setVoteLocked(voteState.lastVoteSchool);
+      }
+    } catch (error) {
+      storageError.textContent = `투표 기록을 불러오지 못했습니다: ${error.message}`;
+      cards.forEach((card) => {
+        card.setAttribute("aria-disabled", "true");
+        card.tabIndex = -1;
+      });
+      voteState = readVoteState(null);
+    }
+
+    window.addEventListener("storage", (event) => {
+      if (event.key !== storageKey || event.newValue === null) return;
+      try {
+        voteState = readVoteState(event.newValue);
+        if (voteState.lastVoteDate === today && voteState.lastVoteSchool) {
+          if (voteState.lastVoteMatchup) {
+            selectedSchools.home = voteState.lastVoteMatchup.home;
+            selectedSchools.away = voteState.lastVoteMatchup.away;
+            schoolSelects.home.value = selectedSchools.home;
+            schoolSelects.away.value = selectedSchools.away;
+            updateSchoolNames();
+            updateSchoolOptions();
+          }
+          setVoteLocked(voteState.lastVoteSchool);
+        }
+        renderStatistics();
+      } catch (error) {
+        storageError.textContent = `다른 탭의 투표 기록을 불러오지 못했습니다: ${error.message}`;
+      }
+    });
+
+    updateSchoolNames();
+    updateSchoolOptions();
+  </script>
+</body>
+</html>

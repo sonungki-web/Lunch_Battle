@@ -104,6 +104,48 @@
       white-space: nowrap;
     }
 
+    .account-panel {
+      margin: 0 auto 32px;
+      padding: 20px 22px;
+      border: 1px solid rgb(32 35 31 / 7%);
+      border-radius: 20px;
+      background: rgb(255 254 250 / 88%);
+      box-shadow: 0 10px 32px rgb(45 43 35 / 5%);
+    }
+
+    .account-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+    .account-heading h2 { margin: 0; font-size: 16px; letter-spacing: -.5px; }
+    .account-hint { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .account-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 14px; }
+    .account-controls input {
+      min-width: 0;
+      flex: 1 1 180px;
+      padding: 11px 12px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: white;
+      color: var(--ink);
+      font: inherit;
+      font-size: 12px;
+    }
+    .account-controls button {
+      padding: 11px 15px;
+      border: 0;
+      border-radius: 11px;
+      background: var(--orange);
+      color: white;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .account-controls button.secondary { background: #eef1e5; color: #4c5c22; }
+    .account-controls button:disabled { cursor: wait; opacity: .6; }
+    .account-status { min-height: 18px; margin: 10px 0 0; color: #62665e; font-size: 11px; line-height: 1.5; }
+    .account-status[data-error="true"] { color: #bd3d2a; }
+    .vote-hint { margin: 8px 0 0; color: #777b73; font-size: 11px; line-height: 1.5; }
+    .school-card.is-locked { cursor: not-allowed; }
+
     .stats-section {
       margin-top: 54px;
       padding: 30px;
@@ -408,6 +450,10 @@
       .intro { margin-bottom: 28px; }
       h1 { letter-spacing: -2.5px; }
       .intro p { font-size: 12px; }
+      .account-panel { margin-bottom: 24px; padding: 17px; }
+      .account-controls { display: grid; grid-template-columns: 1fr 1fr; }
+      .account-controls input { grid-column: 1 / -1; width: 100%; }
+      .account-controls button { width: 100%; padding-inline: 8px; font-size: 11px; }
       .battle { gap: 10px; }
       .school-card { border-radius: 21px; }
       .photo-wrap { height: clamp(190px, 57vw, 260px); }
@@ -449,6 +495,25 @@
         <span class="eyebrow">LUNCH BATTLE · TODAY</span>
         <h1 id="page-title">오늘의 급식, <em>어디가 더 맛있을까?</em></h1>
         <p>세 학교의 오늘 점심을 한눈에 비교해 보세요.</p>
+      </section>
+
+      <section class="account-panel" aria-labelledby="account-title">
+        <div class="account-heading">
+          <h2 id="account-title">가족 계정으로 참여하기 👋</h2>
+          <span id="auth-indicator" class="rank">연결 확인 중</span>
+        </div>
+        <p class="account-hint">가족 구성원마다 이메일 계정으로 로그인하면, 각 계정에서 하루 한 번 투표할 수 있어요.</p>
+        <form id="auth-form">
+          <div class="account-controls">
+            <input id="auth-email" type="email" autocomplete="email" placeholder="이메일 주소" aria-label="이메일 주소" required>
+            <input id="auth-password" type="password" autocomplete="current-password" placeholder="비밀번호 (6자 이상)" aria-label="비밀번호" minlength="6" required>
+            <button id="sign-in-button" type="submit">로그인</button>
+            <button id="sign-up-button" class="secondary" type="button">가족 계정 만들기</button>
+            <button id="sign-out-button" class="secondary" type="button" hidden>로그아웃</button>
+          </div>
+        </form>
+        <p id="account-status" class="account-status" role="status" aria-live="polite">Supabase 연결을 준비하고 있습니다.</p>
+        <p id="vote-hint" class="vote-hint">로그인 후 급식 카드를 눌러 투표하세요.</p>
       </section>
 
       <section class="battle" aria-label="세 학교의 오늘 급식 비교">
@@ -547,12 +612,14 @@
           <span class="stats-total"><span id="total-votes">0</span>표 참여</span>
         </div>
         <ol id="ranking-list" class="ranking-list" aria-label="학교별 누적 득표 순위"></ol>
-        <p class="stats-footnote"><span aria-hidden="true">💡</span><span>투표 기록은 이 기기의 브라우저에 저장돼요. 가족의 여러 기기에서 투표를 합산하려면 공용 서버 연동이 필요합니다.</span></p>
+        <p class="stats-footnote"><span aria-hidden="true">💡</span><span>득표와 순위는 Supabase 공용 데이터베이스에서 불러옵니다. 다른 가족의 투표 결과는 최대 20초 안에 반영돼요.</span></p>
         <p id="storage-error" class="selection-feedback stats-error" role="alert" aria-live="assertive"></p>
       </section>
     </main>
-    <footer>메뉴와 사진은 이해를 돕기 위한 예시입니다. · 이 브라우저에서는 하루 한 번 투표할 수 있어요.</footer>
+    <footer>메뉴와 사진은 이해를 돕기 위한 예시입니다. · 로그인한 계정당 하루 한 번 투표할 수 있어요.</footer>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
   <script>
     const schoolNames = ["안산해양중학교", "안산해솔중학교", "초지고등학교"];
     const schoolCodes = {
@@ -566,76 +633,49 @@
       "안산해솔중학교": ["보리밥 & 얼갈이된장국", "간장 돼지불고기", "애호박전 & 양념장", "배추김치 · 사과"],
       "초지고등학교": ["김가루 주먹밥 & 얼큰 어묵국", "수제 돈가스 & 데미글라스 소스", "고소한 콘 샐러드", "배추김치 · 요구르트"]
     };
-    const storageKey = "lunch-battle.family-votes.v1";
     const cards = [...document.querySelectorAll(".school-card")];
     const selectionFeedback = document.querySelector("#selection-feedback");
     const storageError = document.querySelector("#storage-error");
     const rankingList = document.querySelector("#ranking-list");
     const totalVotes = document.querySelector("#total-votes");
     const mealDate = document.querySelector("#meal-date");
+    const authForm = document.querySelector("#auth-form");
+    const authEmail = document.querySelector("#auth-email");
+    const authPassword = document.querySelector("#auth-password");
+    const signInButton = document.querySelector("#sign-in-button");
+    const signUpButton = document.querySelector("#sign-up-button");
+    const signOutButton = document.querySelector("#sign-out-button");
+    const accountStatus = document.querySelector("#account-status");
+    const authIndicator = document.querySelector("#auth-indicator");
+    const voteHint = document.querySelector("#vote-hint");
     const rankingRows = new Map();
     const mealsBySchool = new Map();
-    const localDate = new Date();
-    const today = `${localDate.getFullYear()}-${String(localDate.getMonth() + 1).padStart(2, "0")}-${String(localDate.getDate()).padStart(2, "0")}`;
-    mealDate.value = today;
+    const today = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Seoul" }).format(new Date());
+    let scores = Object.fromEntries(schoolNames.map((name) => [name, 0]));
     let mealRequestId = 0;
-    let voteState;
-    let storageReady = false;
+    let supabaseClient = null;
+    let currentUser = null;
+    let voteLockedSchool = null;
+    mealDate.value = today;
 
-    function readVoteState(raw) {
-      if (raw === null) {
-        return {
-          version: 1,
-          scores: Object.fromEntries(schoolNames.map((name) => [name, 0])),
-          history: [],
-          lastVoteDate: null,
-          lastVoteSchool: null,
-          lastVoteMatchup: null
-        };
-      }
-
-      const parsed = JSON.parse(raw);
-      if (
-        parsed?.version !== 1 ||
-        !parsed.scores ||
-        !Array.isArray(parsed.history) ||
-        (parsed.lastVoteDate !== null && typeof parsed.lastVoteDate !== "string") ||
-        (parsed.lastVoteSchool !== null && !schoolNames.includes(parsed.lastVoteSchool)) ||
-        (parsed.lastVoteMatchup != null && (
-          !schoolNames.includes(parsed.lastVoteMatchup.home) ||
-          !schoolNames.includes(parsed.lastVoteMatchup.away) ||
-          parsed.lastVoteMatchup.home === parsed.lastVoteMatchup.away
-        ))
-      ) {
-        throw new Error("저장된 투표 데이터 형식이 올바르지 않습니다.");
-      }
-
-      const scores = Object.fromEntries(schoolNames.map((name) => {
-        const score = parsed.scores[name] ?? 0;
-        if (!Number.isSafeInteger(score) || score < 0) {
-          throw new Error("저장된 득표 수가 올바르지 않습니다.");
-        }
-        return [name, score];
-      }));
-      return { ...parsed, scores, lastVoteMatchup: parsed.lastVoteMatchup ?? null };
+    function setAccountStatus(message, isError = false) {
+      accountStatus.textContent = message;
+      accountStatus.dataset.error = String(isError);
     }
 
-    function persistVoteState(nextState) {
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(nextState));
-        voteState = nextState;
-        storageError.textContent = "";
-        return true;
-      } catch (error) {
-        storageError.textContent = `투표를 저장하지 못했습니다: ${error.message}`;
-        return false;
-      }
+    function setCardsEnabled(enabled) {
+      cards.forEach((card) => {
+        card.setAttribute("aria-disabled", String(!enabled));
+        card.tabIndex = enabled ? 0 : -1;
+        if (!enabled) card.classList.add("is-locked");
+        else if (!voteLockedSchool) card.classList.remove("is-locked");
+      });
     }
 
     function renderStatistics() {
-      const total = schoolNames.reduce((sum, name) => sum + voteState.scores[name], 0);
-      const maximum = Math.max(1, ...schoolNames.map((name) => voteState.scores[name]));
-      const sortedSchools = [...schoolNames].sort((a, b) => voteState.scores[b] - voteState.scores[a]);
+      const total = schoolNames.reduce((sum, name) => sum + scores[name], 0);
+      const maximum = Math.max(1, ...schoolNames.map((name) => scores[name]));
+      const sortedSchools = [...schoolNames].sort((a, b) => scores[b] - scores[a]);
       const initialBars = [];
       totalVotes.textContent = total.toLocaleString("ko-KR");
       sortedSchools.forEach((name, index) => {
@@ -658,15 +698,15 @@
           votes.className = "ranking-votes";
           row.append(place, school, track, votes);
           rankingRows.set(name, row);
-          initialBars.push([fill, `${(voteState.scores[name] / maximum) * 100}%`]);
+          initialBars.push([fill, `${(scores[name] / maximum) * 100}%`]);
         }
 
-        row.setAttribute("aria-label", `${index + 1}위 ${name}, ${voteState.scores[name]}표`);
+        row.setAttribute("aria-label", `${index + 1}위 ${name}, ${scores[name]}표`);
         row.querySelector(".ranking-place").textContent = `${index + 1}위`;
         row.querySelector(".ranking-school").textContent = name;
-        row.querySelector(".ranking-votes").textContent = `${voteState.scores[name].toLocaleString("ko-KR")}표`;
+        row.querySelector(".ranking-votes").textContent = `${scores[name].toLocaleString("ko-KR")}표`;
         if (!initialBars.some(([fill]) => fill === row.querySelector(".bar-fill"))) {
-          row.querySelector(".bar-fill").style.width = `${(voteState.scores[name] / maximum) * 100}%`;
+          row.querySelector(".bar-fill").style.width = `${(scores[name] / maximum) * 100}%`;
         }
         rankingList.append(row);
       });
@@ -678,11 +718,12 @@
 
       cards.forEach((card) => {
         const schoolName = card.dataset.school;
-        card.querySelector(".vote-total").textContent = voteState.scores[schoolName].toLocaleString("ko-KR");
+        card.querySelector(".vote-total").textContent = scores[schoolName].toLocaleString("ko-KR");
       });
     }
 
     function setVoteLocked(schoolName) {
+      voteLockedSchool = schoolName;
       cards.forEach((card) => {
         const isWinner = card.dataset.school === schoolName;
         card.classList.add(isWinner ? "is-winner" : "is-locked");
@@ -690,6 +731,45 @@
         card.setAttribute("aria-pressed", String(isWinner));
         card.tabIndex = -1;
       });
+    }
+
+    async function refreshVoteTotals() {
+      if (!supabaseClient) return;
+      const { data, error } = await supabaseClient.rpc("get_vote_totals");
+      if (error) throw error;
+      const nextScores = Object.fromEntries(schoolNames.map((name) => [name, 0]));
+      data.forEach((row) => {
+        if (schoolNames.includes(row.school_name)) {
+          nextScores[row.school_name] = Number(row.votes);
+        }
+      });
+      scores = nextScores;
+      renderStatistics();
+      storageError.textContent = "";
+    }
+
+    async function refreshMyVote() {
+      if (!supabaseClient || !currentUser) return;
+      const { data, error } = await supabaseClient.rpc("get_my_vote");
+      if (error) throw error;
+      if (data && schoolNames.includes(data)) {
+        setVoteLocked(data);
+        voteHint.textContent = `오늘은 ${data}에 투표를 완료했어요. 내일 다시 투표할 수 있습니다.`;
+      } else {
+        voteLockedSchool = null;
+        setCardsEnabled(true);
+        voteHint.textContent = "카드를 눌러 오늘의 급식에 투표하세요. 계정당 하루 한 번 참여할 수 있어요.";
+      }
+    }
+
+    async function refreshAccountData() {
+      if (!supabaseClient) return;
+      try {
+        await refreshVoteTotals();
+        if (currentUser) await refreshMyVote();
+      } catch (error) {
+        storageError.textContent = `투표 정보를 불러오지 못했습니다: ${error.message}`;
+      }
     }
 
     function updateSchoolNames() {
@@ -804,62 +884,175 @@
 
     mealDate.addEventListener("change", () => loadMeals(mealDate.value));
 
-    function castVote(winner) {
-      if (!storageReady || voteState.lastVoteDate === today) return;
-      const winnerName = winner.querySelector(".school-name").textContent;
-      const nextState = {
-        ...voteState,
-        scores: { ...voteState.scores, [winnerName]: voteState.scores[winnerName] + 1 },
-        history: [...voteState.history, { school: winnerName, date: today, timestamp: new Date().toISOString() }].slice(-1000),
-        lastVoteDate: today,
-        lastVoteSchool: winnerName,
-        lastVoteMatchup: null
-      };
-      if (!persistVoteState(nextState)) return;
-      setVoteLocked(winnerName);
-      renderStatistics();
-      selectionFeedback.textContent = `${winnerName}에 투표했습니다.`;
+    async function castVote(winner) {
+      if (!currentUser || voteLockedSchool || !supabaseClient) {
+        setAccountStatus(currentUser ? "오늘 투표는 이미 완료했어요." : "투표하려면 먼저 가족 계정으로 로그인해 주세요.", true);
+        return;
+      }
+      const winnerName = winner.dataset.school;
+      cards.forEach((card) => { card.style.pointerEvents = "none"; });
+      try {
+        const { error } = await supabaseClient.rpc("submit_vote", { p_school_name: winnerName });
+        if (error) throw error;
+        setVoteLocked(winnerName);
+        voteHint.textContent = `오늘은 ${winnerName}에 투표를 완료했어요. 내일 다시 투표할 수 있습니다.`;
+        setAccountStatus("투표가 저장됐어요! 가족 순위에 반영했습니다.");
+        await refreshVoteTotals();
+      } catch (error) {
+        setAccountStatus(error.message.includes("이미 오늘 투표") ? error.message : `투표를 저장하지 못했습니다: ${error.message}`, true);
+        await refreshAccountData();
+      } finally {
+        cards.forEach((card) => { card.style.pointerEvents = ""; });
+      }
     }
 
     cards.forEach((card) => {
-      card.addEventListener("click", () => castVote(card));
+      card.addEventListener("click", () => { void castVote(card); });
       card.addEventListener("keydown", (event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          castVote(card);
+          void castVote(card);
         }
       });
     });
 
-    try {
-      voteState = readVoteState(localStorage.getItem(storageKey));
-      storageReady = true;
-      if (voteState.lastVoteDate === today && voteState.lastVoteSchool) {
-        setVoteLocked(voteState.lastVoteSchool);
-      }
-    } catch (error) {
-      storageError.textContent = `투표 기록을 불러오지 못했습니다: ${error.message}`;
-      cards.forEach((card) => {
-        card.setAttribute("aria-disabled", "true");
-        card.tabIndex = -1;
-      });
-      voteState = readVoteState(null);
+    function setAuthBusy(isBusy) {
+      signInButton.disabled = isBusy;
+      signUpButton.disabled = isBusy;
+      signOutButton.disabled = isBusy;
     }
 
-    window.addEventListener("storage", (event) => {
-      if (event.key !== storageKey || event.newValue === null) return;
+    async function updateAuthState(session) {
+      currentUser = session?.user ?? null;
+      const isLoggedIn = Boolean(currentUser);
+      authEmail.hidden = isLoggedIn;
+      authPassword.hidden = isLoggedIn;
+      signInButton.hidden = isLoggedIn;
+      signUpButton.hidden = isLoggedIn;
+      signOutButton.hidden = !isLoggedIn;
+      authIndicator.textContent = isLoggedIn ? "로그인됨" : "로그아웃";
+      if (isLoggedIn) {
+        setAccountStatus(`${currentUser.email} 계정으로 로그인했어요.`);
+        setCardsEnabled(true);
+        await refreshAccountData();
+      } else {
+        voteLockedSchool = null;
+        cards.forEach((card) => {
+          card.classList.remove("is-winner", "is-locked");
+          card.setAttribute("aria-pressed", "false");
+        });
+        setCardsEnabled(false);
+        voteHint.textContent = "로그인 후 급식 카드를 눌러 투표하세요.";
+        await refreshVoteTotals();
+      }
+    }
+
+    authForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!supabaseClient) return;
+      setAuthBusy(true);
+      setAccountStatus("로그인하는 중입니다.");
       try {
-        voteState = readVoteState(event.newValue);
-        if (voteState.lastVoteDate === today && voteState.lastVoteSchool) {
-          setVoteLocked(voteState.lastVoteSchool);
-        }
-        renderStatistics();
+        const { error } = await supabaseClient.auth.signInWithPassword({
+          email: authEmail.value.trim(),
+          password: authPassword.value
+        });
+        if (error) throw error;
+        authPassword.value = "";
       } catch (error) {
-        storageError.textContent = `다른 탭의 투표 기록을 불러오지 못했습니다: ${error.message}`;
+        setAccountStatus(`로그인하지 못했습니다: ${error.message}`, true);
+      } finally {
+        setAuthBusy(false);
       }
     });
 
+    signUpButton.addEventListener("click", async () => {
+      if (!supabaseClient) return;
+      if (!authForm.reportValidity()) return;
+      setAuthBusy(true);
+      setAccountStatus("가족 계정을 만드는 중입니다.");
+      try {
+        const { data, error } = await supabaseClient.auth.signUp({
+          email: authEmail.value.trim(),
+          password: authPassword.value,
+          options: { emailRedirectTo: window.location.href }
+        });
+        if (error) throw error;
+        if (!data.session) {
+          setAccountStatus("가입 확인 메일을 보냈어요. 메일의 링크를 연 다음 이 페이지에서 로그인해 주세요.");
+        } else {
+          setAccountStatus("가족 계정을 만들고 로그인했어요.");
+        }
+        authPassword.value = "";
+      } catch (error) {
+        setAccountStatus(`계정을 만들지 못했습니다: ${error.message}`, true);
+      } finally {
+        setAuthBusy(false);
+      }
+    });
+
+    signOutButton.addEventListener("click", async () => {
+      if (!supabaseClient) return;
+      setAuthBusy(true);
+      try {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) throw error;
+        setAccountStatus("로그아웃했습니다.");
+      } catch (error) {
+        setAccountStatus(`로그아웃하지 못했습니다: ${error.message}`, true);
+      } finally {
+        setAuthBusy(false);
+      }
+    });
+
+    async function initializeSupabase() {
+      const config = window.LUNCH_BATTLE_SUPABASE;
+      if (!config?.url || !config?.publishableKey || config.publishableKey.includes("PASTE_")) {
+        authIndicator.textContent = "설정 필요";
+        setAccountStatus("supabase-config.js에 Project URL과 Publishable key를 입력한 뒤 새로고침해 주세요.", true);
+        setCardsEnabled(false);
+        return;
+      }
+      if (!window.supabase?.createClient) {
+        authIndicator.textContent = "연결 오류";
+        setAccountStatus("Supabase 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.", true);
+        setCardsEnabled(false);
+        return;
+      }
+
+      supabaseClient = window.supabase.createClient(config.url, config.publishableKey);
+      try {
+        const { data, error } = await supabaseClient.auth.getSession();
+        if (error) throw error;
+        await updateAuthState(data.session);
+        supabaseClient.auth.onAuthStateChange((_event, session) => {
+          void updateAuthState(session);
+        });
+        authIndicator.textContent = currentUser ? "로그인됨" : "연결됨";
+        if (!currentUser) setAccountStatus("Supabase에 연결됐어요. 이메일로 로그인하거나 가족 계정을 만들어 주세요.");
+      } catch (error) {
+        authIndicator.textContent = "연결 오류";
+        setAccountStatus(`Supabase 연결에 실패했습니다: ${error.message}`, true);
+      }
+    }
+
+    window.setInterval(() => {
+      if (document.visibilityState === "visible" && supabaseClient) {
+        void refreshVoteTotals().catch((error) => {
+          storageError.textContent = `순위를 새로고침하지 못했습니다: ${error.message}`;
+        });
+        if (currentUser) {
+          void refreshMyVote().catch((error) => {
+            storageError.textContent = `오늘 투표 여부를 확인하지 못했습니다: ${error.message}`;
+          });
+        }
+      }
+    }, 20000);
+
     updateSchoolNames();
+    renderStatistics();
+    setCardsEnabled(false);
+    void initializeSupabase();
     loadMeals(mealDate.value);
   </script>
 </body>

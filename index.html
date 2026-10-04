@@ -284,8 +284,8 @@
       transition: box-shadow .2s ease, transform .2s ease;
     }
 
-    .school-card:not(.is-voted):hover { transform: translateY(-3px); box-shadow: 0 22px 60px rgb(45 43 35 / 12%); }
-    .school-card.is-voted { cursor: default; }
+    .school-card:not(.is-locked):hover { transform: translateY(-3px); box-shadow: 0 22px 60px rgb(45 43 35 / 12%); }
+    .school-card.is-voted { cursor: pointer; }
     .school-card.is-locked { cursor: not-allowed; }
 
     .photo-wrap { position: relative; height: 285px; overflow: hidden; background: #e7e3d8; }
@@ -616,7 +616,7 @@
         <p id="storage-error" class="selection-feedback stats-error" role="alert" aria-live="assertive"></p>
       </section>
     </main>
-    <footer>메뉴와 사진은 이해를 돕기 위한 예시입니다. · 로그인한 계정당 하루 한 번 투표할 수 있어요.</footer>
+    <footer>메뉴와 사진은 이해를 돕기 위한 예시입니다. · 로그인한 계정은 하루 한 표를 투표하고, 당일에는 선택을 바꿀 수 있어요.</footer>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js"></script>
@@ -656,6 +656,7 @@
     let supabaseClient = null;
     let currentUser = null;
     let voteLockedSchool = null;
+    let voteSubmitting = false;
     mealDate.value = today;
 
     function setAccountStatus(message, isError = false) {
@@ -726,10 +727,11 @@
       voteLockedSchool = schoolName;
       cards.forEach((card) => {
         const isWinner = card.dataset.school === schoolName;
-        card.classList.add(isWinner ? "is-winner" : "is-locked");
-        card.setAttribute("aria-disabled", "true");
+        card.classList.remove("is-winner", "is-locked", "is-voted");
+        if (isWinner) card.classList.add("is-voted", "is-winner");
+        card.setAttribute("aria-disabled", "false");
         card.setAttribute("aria-pressed", String(isWinner));
-        card.tabIndex = -1;
+        card.tabIndex = 0;
       });
     }
 
@@ -753,8 +755,8 @@
       const { data, error } = await supabaseClient.rpc("get_my_vote");
       if (error) throw error;
       if (data && schoolNames.includes(data)) {
-        setVoteLocked(data);
-        voteHint.textContent = `오늘은 ${data}에 투표를 완료했어요. 내일 다시 투표할 수 있습니다.`;
+        if (voteLockedSchool !== data) setVoteLocked(data);
+        voteHint.textContent = `오늘 선택: ${data} · 다른 카드를 누르면 오늘 투표를 변경할 수 있어요.`;
       } else {
         voteLockedSchool = null;
         setCardsEnabled(true);
@@ -885,23 +887,32 @@
     mealDate.addEventListener("change", () => loadMeals(mealDate.value));
 
     async function castVote(winner) {
-      if (!currentUser || voteLockedSchool || !supabaseClient) {
-        setAccountStatus(currentUser ? "오늘 투표는 이미 완료했어요." : "투표하려면 먼저 가족 계정으로 로그인해 주세요.", true);
+      if (!currentUser || !supabaseClient || voteSubmitting) {
+        if (!currentUser) setAccountStatus("투표하려면 먼저 가족 계정으로 로그인해 주세요.", true);
         return;
       }
       const winnerName = winner.dataset.school;
+      const previousVote = voteLockedSchool;
+      if (previousVote === winnerName) {
+        setAccountStatus(`이미 ${winnerName}을(를) 선택했어요. 다른 학교를 누르면 투표를 변경할 수 있습니다.`);
+        return;
+      }
+      voteSubmitting = true;
       cards.forEach((card) => { card.style.pointerEvents = "none"; });
       try {
         const { error } = await supabaseClient.rpc("submit_vote", { p_school_name: winnerName });
         if (error) throw error;
         setVoteLocked(winnerName);
-        voteHint.textContent = `오늘은 ${winnerName}에 투표를 완료했어요. 내일 다시 투표할 수 있습니다.`;
-        setAccountStatus("투표가 저장됐어요! 가족 순위에 반영했습니다.");
+        voteHint.textContent = `오늘 선택: ${winnerName} · 다른 카드를 누르면 오늘 투표를 변경할 수 있어요.`;
+        setAccountStatus(previousVote
+          ? `투표를 ${winnerName}(으)로 변경했어요. 가족 순위에 반영했습니다.`
+          : `${winnerName}에 투표했어요. 오늘은 다른 학교를 눌러 선택을 바꿀 수 있습니다.`);
         await refreshVoteTotals();
       } catch (error) {
-        setAccountStatus(error.message.includes("이미 오늘 투표") ? error.message : `투표를 저장하지 못했습니다: ${error.message}`, true);
+        setAccountStatus(`투표를 저장하지 못했습니다: ${error.message}`, true);
         await refreshAccountData();
       } finally {
+        voteSubmitting = false;
         cards.forEach((card) => { card.style.pointerEvents = ""; });
       }
     }

@@ -144,7 +144,7 @@
     .account-status { min-height: 18px; margin: 10px 0 0; color: #62665e; font-size: 11px; line-height: 1.5; }
     .account-status[data-error="true"] { color: #bd3d2a; }
     .vote-hint { margin: 8px 0 0; color: #777b73; font-size: 11px; line-height: 1.5; }
-    .school-card.is-locked { cursor: not-allowed; }
+    .school-card.is-locked { cursor: not-allowed; opacity: .72; }
 
     .stats-section {
       margin-top: 54px;
@@ -628,11 +628,6 @@
       "초지고등학교": "7530478"
     };
     const educationOfficeCode = "J10";
-    const exampleMenus = {
-      "안산해양중학교": ["찰현미밥 & 한우 미역국", "바삭한 순살 치킨 & 양념소스", "새콤달콤 과일 샐러드", "깍두기 · 초코 우유"],
-      "안산해솔중학교": ["보리밥 & 얼갈이된장국", "간장 돼지불고기", "애호박전 & 양념장", "배추김치 · 사과"],
-      "초지고등학교": ["김가루 주먹밥 & 얼큰 어묵국", "수제 돈가스 & 데미글라스 소스", "고소한 콘 샐러드", "배추김치 · 요구르트"]
-    };
     const cards = [...document.querySelectorAll(".school-card")];
     const selectionFeedback = document.querySelector("#selection-feedback");
     const storageError = document.querySelector("#storage-error");
@@ -664,13 +659,40 @@
       accountStatus.dataset.error = String(isError);
     }
 
-    function setCardsEnabled(enabled) {
+    function updateVoteAvailability() {
+      const selectedDateIsToday = mealDate.value === today;
+      const statuses = schoolNames.map((name) => mealsBySchool.get(name)?.status ?? "loading");
+      const allConfirmedNoMeal = statuses.every((status) => status === "unavailable");
+
       cards.forEach((card) => {
-        card.setAttribute("aria-disabled", String(!enabled));
-        card.tabIndex = enabled ? 0 : -1;
-        if (!enabled) card.classList.add("is-locked");
-        else if (!voteLockedSchool) card.classList.remove("is-locked");
+        const meal = mealsBySchool.get(card.dataset.school);
+        const canVote = Boolean(
+          currentUser &&
+          supabaseClient &&
+          selectedDateIsToday &&
+          meal?.available === true &&
+          !voteSubmitting
+        );
+        card.setAttribute("aria-disabled", String(!canVote));
+        card.tabIndex = canVote ? 0 : -1;
+        card.classList.toggle("is-locked", !canVote && !card.classList.contains("is-winner"));
       });
+
+      if (!currentUser) {
+        voteHint.textContent = "로그인 후 오늘 급식이 있는 학교에 투표할 수 있어요.";
+      } else if (!selectedDateIsToday) {
+        voteHint.textContent = "다른 날짜 식단은 조회할 수 있지만, 투표는 오늘 급식에만 할 수 있어요.";
+      } else if (allConfirmedNoMeal) {
+        voteHint.textContent = "오늘은 세 학교 모두 급식이 없어 투표할 수 없습니다.";
+      } else if (voteLockedSchool) {
+        voteHint.textContent = `오늘 선택: ${voteLockedSchool} · 급식이 있는 다른 학교를 누르면 변경할 수 있어요.`;
+      } else if (statuses.some((status) => status === "loading")) {
+        voteHint.textContent = "오늘 급식 정보를 확인하고 있어요. 확인이 끝나면 투표할 수 있습니다.";
+      } else if (statuses.some((status) => status === "error")) {
+        voteHint.textContent = "급식 정보를 확인할 수 없는 학교는 투표할 수 없어요.";
+      } else {
+        voteHint.textContent = "오늘 급식이 확인된 학교 카드만 투표할 수 있어요.";
+      }
     }
 
     function renderStatistics() {
@@ -729,10 +751,9 @@
         const isWinner = card.dataset.school === schoolName;
         card.classList.remove("is-winner", "is-locked", "is-voted");
         if (isWinner) card.classList.add("is-voted", "is-winner");
-        card.setAttribute("aria-disabled", "false");
         card.setAttribute("aria-pressed", String(isWinner));
-        card.tabIndex = 0;
       });
+      updateVoteAvailability();
     }
 
     async function refreshVoteTotals() {
@@ -756,11 +777,10 @@
       if (error) throw error;
       if (data && schoolNames.includes(data)) {
         if (voteLockedSchool !== data) setVoteLocked(data);
-        voteHint.textContent = `오늘 선택: ${data} · 다른 카드를 누르면 오늘 투표를 변경할 수 있어요.`;
+        updateVoteAvailability();
       } else {
         voteLockedSchool = null;
-        setCardsEnabled(true);
-        voteHint.textContent = "카드를 눌러 오늘의 급식에 투표하세요. 계정당 하루 한 번 참여할 수 있어요.";
+        updateVoteAvailability();
       }
     }
 
@@ -793,13 +813,14 @@
 
         const list = card.querySelector(".school-menu");
         list.replaceChildren();
-        (meal.items.length ? meal.items : [meal.message]).forEach((item) => {
+        (meal.available ? meal.items : [meal.message ?? "급식 정보를 확인할 수 없습니다."]).forEach((item) => {
           const entry = document.createElement("li");
           entry.textContent = item;
           list.append(entry);
         });
         card.querySelector(".today-note").textContent = meal.note;
       });
+      updateVoteAvailability();
     }
 
     function formatMealDate(value) {
@@ -810,7 +831,7 @@
     }
 
     function noMeal(message = "선택한 날짜에는 급식이 없어요.") {
-      return { items: [], message, note: "오늘은 급식이 없는 날이에요!" };
+      return { items: [], message, note: "오늘은 급식이 없는 날이에요!", available: false, status: "unavailable" };
     }
 
     async function fetchSchoolMeal(schoolName, apiDate) {
@@ -844,7 +865,8 @@
         lunch.DDISH_NM.replace(/<br\s*\/?\s*>/gi, "\n"), "text/html"
       ).body.textContent;
       const items = text.split("\n").map((item) => item.trim()).filter(Boolean);
-      return { items, note: lunch.CAL_INFO ? `중식 · ${lunch.CAL_INFO}` : "NEIS 등록 식단" };
+      if (!items.length) return noMeal();
+      return { items, note: lunch.CAL_INFO ? `중식 · ${lunch.CAL_INFO}` : "NEIS 등록 식단", available: true, status: "available" };
     }
 
     async function loadMeals(value) {
@@ -863,7 +885,11 @@
       }
 
       schoolNames.forEach((name) => mealsBySchool.set(name, {
-        items: ["NEIS에서 식단을 불러오는 중입니다."], note: "급식 정보를 조회하고 있어요."
+        items: [],
+        message: "NEIS에서 식단을 불러오는 중입니다.",
+        note: "급식 정보를 조회하고 있어요.",
+        available: false,
+        status: "loading"
       }));
       renderMenus();
 
@@ -874,8 +900,11 @@
         } catch (error) {
           if (requestId === mealRequestId) {
             mealsBySchool.set(name, {
-              items: exampleMenus[name],
-              note: "연결 오류 · 예시 메뉴를 표시합니다"
+              items: [],
+              message: "급식 정보를 확인할 수 없습니다.",
+              note: "연결 오류 · 확인 전에는 투표할 수 없어요.",
+              available: false,
+              status: "error"
             });
           }
         }
@@ -892,6 +921,11 @@
         return;
       }
       const winnerName = winner.dataset.school;
+      if (mealDate.value !== today || mealsBySchool.get(winnerName)?.available !== true) {
+        setAccountStatus("오늘 급식이 확인된 학교만 투표할 수 있습니다.", true);
+        updateVoteAvailability();
+        return;
+      }
       const previousVote = voteLockedSchool;
       if (previousVote === winnerName) {
         setAccountStatus(`이미 ${winnerName}을(를) 선택했어요. 다른 학교를 누르면 투표를 변경할 수 있습니다.`);
@@ -903,7 +937,6 @@
         const { error } = await supabaseClient.rpc("submit_vote", { p_school_name: winnerName });
         if (error) throw error;
         setVoteLocked(winnerName);
-        voteHint.textContent = `오늘 선택: ${winnerName} · 다른 카드를 누르면 오늘 투표를 변경할 수 있어요.`;
         setAccountStatus(previousVote
           ? `투표를 ${winnerName}(으)로 변경했어요. 가족 순위에 반영했습니다.`
           : `${winnerName}에 투표했어요. 오늘은 다른 학교를 눌러 선택을 바꿀 수 있습니다.`);
@@ -914,6 +947,7 @@
       } finally {
         voteSubmitting = false;
         cards.forEach((card) => { card.style.pointerEvents = ""; });
+        updateVoteAvailability();
       }
     }
 
@@ -944,7 +978,7 @@
       authIndicator.textContent = isLoggedIn ? "로그인됨" : "로그아웃";
       if (isLoggedIn) {
         setAccountStatus(`${currentUser.email} 계정으로 로그인했어요.`);
-        setCardsEnabled(true);
+        updateVoteAvailability();
         await refreshAccountData();
       } else {
         voteLockedSchool = null;
@@ -952,8 +986,7 @@
           card.classList.remove("is-winner", "is-locked");
           card.setAttribute("aria-pressed", "false");
         });
-        setCardsEnabled(false);
-        voteHint.textContent = "로그인 후 급식 카드를 눌러 투표하세요.";
+        updateVoteAvailability();
         await refreshVoteTotals();
       }
     }
@@ -1021,13 +1054,13 @@
       if (!config?.url || !config?.publishableKey || config.publishableKey.includes("PASTE_")) {
         authIndicator.textContent = "설정 필요";
         setAccountStatus("supabase-config.js에 Project URL과 Publishable key를 입력한 뒤 새로고침해 주세요.", true);
-        setCardsEnabled(false);
+        updateVoteAvailability();
         return;
       }
       if (!window.supabase?.createClient) {
         authIndicator.textContent = "연결 오류";
         setAccountStatus("Supabase 라이브러리를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.", true);
-        setCardsEnabled(false);
+        updateVoteAvailability();
         return;
       }
 
@@ -1062,7 +1095,7 @@
 
     updateSchoolNames();
     renderStatistics();
-    setCardsEnabled(false);
+    updateVoteAvailability();
     void initializeSupabase();
     loadMeals(mealDate.value);
   </script>
